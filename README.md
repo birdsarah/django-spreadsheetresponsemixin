@@ -6,7 +6,7 @@ View mixin for django, that generates a csv or excel sheet.
 Usage
 =====
 
-Add to your django view as a mixin e.g.::
+Add to your django view as a mixin::
 
     class ExcelExportView(SpreadsheetResponseMixin, ListView):
         def get(self, request):
