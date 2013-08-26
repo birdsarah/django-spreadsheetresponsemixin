@@ -16,7 +16,7 @@ class MockModelFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: 'title{0}'.format(n))
 
 
-class SpreadsheetResponseMixinGenerateDataTests(TestCase):
+class GenerateDataTests(TestCase):
     def setUp(self):
         self.mixin = SpreadsheetResponseMixin()
         self.mock = MockModelFactory()
@@ -66,7 +66,7 @@ class SpreadsheetResponseMixinGenerateDataTests(TestCase):
         assert actual_list[0] == (self.mock.title, self.mock.id)
 
 
-class SpreadsheetResponseMixinGenerateXlsxTests(TestCase):
+class GenerateXlsxTests(TestCase):
     def setUp(self):
         self.data = (('row1col1', 'row1col2'), ('row2col1', 'row2col2'))
         self.mixin = SpreadsheetResponseMixin()
@@ -97,7 +97,7 @@ class SpreadsheetResponseMixinGenerateXlsxTests(TestCase):
         assert ws.cell('B2').value == 'row1col2'
 
 
-class SpreadsheetResponseMixinGenerateCsvTests(TestCase):
+class GenerateCsvTests(TestCase):
     def setUp(self):
         self.data = (('row1col1', 'row1col2'), ('row2col1', 'row2col2'))
         self.mixin = SpreadsheetResponseMixin()
@@ -139,7 +139,7 @@ class SpreadsheetResponseMixinGenerateCsvTests(TestCase):
         assert generated_csv.getvalue() == expected_string
 
 
-class SpreadsheetResponseMixinRenderExcelResponseTests(TestCase):
+class RenderExcelResponseTests(TestCase):
     def setUp(self):
         self.mixin = SpreadsheetResponseMixin()
         MockModelFactory()
@@ -165,7 +165,14 @@ class SpreadsheetResponseMixinRenderExcelResponseTests(TestCase):
     def test_generate_data_is_called_once_with_queryset_param(self):
         self.mixin.generate_data = mock.MagicMock()
         self.mixin.render_excel_response(queryset='test')
-        self.mixin.generate_data.assert_called_once(queryset='test')
+        self.mixin.generate_data.assert_called_once_with(queryset='test',
+                                                         fields=None)
+
+    def test_generate_data_is_called_once_with_fields_if_provided(self):
+        self.mixin.generate_data = mock.MagicMock()
+        self.mixin.render_excel_response(queryset='test', fields='testfields')
+        self.mixin.generate_data.assert_called_once_with(queryset='test',
+                                                         fields='testfields')
 
     def test_generate_xslx_is_called_with_data(self):
         self.mixin.generate_xlsx = mock.MagicMock()
@@ -192,7 +199,7 @@ class SpreadsheetResponseMixinRenderExcelResponseTests(TestCase):
             == HttpResponse
 
 
-class SpreadsheetResponseMixinRenderCsvResponseTests(TestCase):
+class RenderCsvResponseTests(TestCase):
     def setUp(self):
         MockModelFactory()
         self.queryset = MockModel.objects.all()
@@ -217,9 +224,14 @@ class SpreadsheetResponseMixinRenderCsvResponseTests(TestCase):
     def test_generate_data_is_called_once_with_queryset_param(self):
         self.mixin.generate_data = mock.MagicMock()
         self.mixin.render_csv_response(queryset='test')
-        mut = self.mixin.generate_data
-        assert mut.call_count == 1
-        assert mut.call_args.__getnewargs__()[0][1]['queryset'] == 'test'
+        self.mixin.generate_data.assert_called_once_with(queryset='test',
+                                                         fields=None)
+
+    def test_generate_data_is_called_once_with_fields_if_provided(self):
+        self.mixin.generate_data = mock.MagicMock()
+        self.mixin.render_csv_response(queryset='test', fields='testfields')
+        self.mixin.generate_data.assert_called_once_with(queryset='test',
+                                                         fields='testfields')
 
     def test_generate_csv_is_called_with_data(self):
         self.mixin.generate_csv = mock.MagicMock()

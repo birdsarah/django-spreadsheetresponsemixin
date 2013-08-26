@@ -62,7 +62,8 @@ class SpreadsheetResponseMixin(object):
     def render_excel_response(self, **kwargs):
         # Generate content
         queryset = kwargs.get('queryset')
-        data = self.generate_data(queryset=queryset)
+        fields = kwargs.get('fields')
+        data = self.generate_data(queryset=queryset, fields=fields)
         headers = kwargs.get('headers')
         # Setup response
         content_type = \
@@ -76,7 +77,8 @@ class SpreadsheetResponseMixin(object):
     def render_csv_response(self, **kwargs):
         # Generate content
         queryset = kwargs.get('queryset')
-        data = self.generate_data(queryset=queryset)
+        fields = kwargs.get('fields')
+        data = self.generate_data(queryset=queryset, fields=fields)
         headers = kwargs.get('headers')
         # Build response
         content_type = 'text/csv'
