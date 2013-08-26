@@ -1,0 +1,7 @@
+factory_boy==2.1.1
+mock
+pytest-django
+pytest-cov
+# For module
+django>1.5
+openpyxl
