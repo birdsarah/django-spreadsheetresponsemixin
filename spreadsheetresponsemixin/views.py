@@ -26,8 +26,7 @@ class SpreadsheetResponseMixin(object):
 
     def generate_xlsx(self, data, headers=None, file=None):
         wb = Workbook()
-        ws = wb.create_sheet()
-        ws.title = 'RUFORUM Export'  # Not happy without title
+        ws = wb.get_active_sheet()
 
         # Put in headers
         rowoffset = 0

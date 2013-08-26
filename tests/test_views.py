@@ -72,7 +72,7 @@ class GenerateXlsxTests(TestCase):
         self.mixin = SpreadsheetResponseMixin()
 
     def _get_sheet(self, wb):
-        return wb.get_sheet_by_name('RUFORUM Export')
+        return wb.get_active_sheet()
 
     def test_returns_workbook_if_no_file_passed(self):
         assert type(self.mixin.generate_xlsx(self.data)) == Workbook
