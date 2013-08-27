@@ -6,6 +6,21 @@ import csv
 
 
 class SpreadsheetResponseMixin(object):
+    def get_fields(self, **kwargs):
+        if 'fields' in kwargs:
+            return kwargs['fields']
+        elif hasattr(self, 'fields') and self.fields is not None:
+            return self.fields
+        else:
+            model = None
+            if hasattr(self, 'model') and self.model is not None:
+                model =  self.model
+            elif hasattr(self, 'queryset') and self.queryset is not None:
+                model = self.queryset.model
+            if model:
+                return model._meta.get_all_field_names()
+        return ()
+
     def generate_data(self, queryset=None, fields=None):
         if not queryset:
             try:
@@ -93,7 +108,7 @@ class SpreadsheetResponseMixin(object):
     def render_setup(self, **kwargs):
         # Generate content
         queryset = kwargs.get('queryset')
-        fields = kwargs.get('fields')
+        fields = self.get_fields(**kwargs)
         data = self.generate_data(queryset=queryset, fields=fields)
         headers = kwargs.get('headers')
         if not headers:
