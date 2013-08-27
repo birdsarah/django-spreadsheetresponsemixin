@@ -58,31 +58,44 @@ class SpreadsheetResponseMixin(object):
             writer.writerow(row)
         return generated_csv
 
+    def generate_headers(self, data, fields=None):
+        model_fields = (field for field in data.model._meta.fields)
+        if fields:
+            model_fields = (field
+                            for field in model_fields
+                            if field.name in fields)
+        field_names = (field.verbose_name.title() for field in model_fields)
+        return tuple(field_names)
+
     def render_excel_response(self, **kwargs):
         # Generate content
-        queryset = kwargs.get('queryset')
-        fields = kwargs.get('fields')
-        data = self.generate_data(queryset=queryset, fields=fields)
-        headers = kwargs.get('headers')
+        self.data, self.headers = self.render_setup(**kwargs)
         # Setup response
         content_type = \
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response = HttpResponse(content_type=content_type)
         response['Content-Disposition'] = 'attachment; filename="export.xlsx"'
         # Add content and return response
-        self.generate_xlsx(data=data, headers=headers, file=response)
+        self.generate_xlsx(data=self.data, headers=self.headers, file=response)
         return response
 
     def render_csv_response(self, **kwargs):
         # Generate content
-        queryset = kwargs.get('queryset')
-        fields = kwargs.get('fields')
-        data = self.generate_data(queryset=queryset, fields=fields)
-        headers = kwargs.get('headers')
+        self.data, self.headers = self.render_setup(**kwargs)
         # Build response
         content_type = 'text/csv'
         response = HttpResponse(content_type=content_type)
         response['Content-Disposition'] = 'attachment; filename="export.csv"'
         # Add content to response
-        self.generate_csv(data=data, headers=headers, file=response)
+        self.generate_csv(data=self.data, headers=self.headers, file=response)
         return response
+
+    def render_setup(self, **kwargs):
+        # Generate content
+        queryset = kwargs.get('queryset')
+        fields = kwargs.get('fields')
+        data = self.generate_data(queryset=queryset, fields=fields)
+        headers = kwargs.get('headers')
+        if not headers:
+            headers = self.generate_headers(data, fields=fields)
+        return data, headers

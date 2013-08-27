@@ -139,6 +139,27 @@ class GenerateCsvTests(TestCase):
         assert generated_csv.getvalue() == expected_string
 
 
+class RenderSetupTests(TestCase):
+    def setUp(self):
+        self.mixin = SpreadsheetResponseMixin()
+        MockModelFactory()
+        self.queryset = MockModel.objects.all()
+        self.mixin.queryset = self.queryset
+
+    def test_generate_data_is_called_once_with_fields_and_queryset(self):
+        self.mixin.generate_data = mock.MagicMock()
+        self.mixin.render_excel_response(queryset='test', fields='testfields')
+        self.mixin.generate_data.assert_called_once_with(queryset='test',
+                                                         fields='testfields')
+
+    def test_if_no_headers_passed_generate_headers_called(self):
+        self.mixin.generate_headers = mock.MagicMock()
+        fields = (u'title',)
+        self.mixin.render_excel_response(fields=fields)
+        self.mixin.generate_headers.assert_called_once_with(self.mixin.data,
+                                                            fields=fields)
+
+
 class RenderExcelResponseTests(TestCase):
     def setUp(self):
         self.mixin = SpreadsheetResponseMixin()
@@ -161,18 +182,6 @@ class RenderExcelResponseTests(TestCase):
         response = self.mixin.render_excel_response()
         actual_disposition = response._headers['content-disposition'][1]
         assert actual_disposition == expected_disposition
-
-    def test_generate_data_is_called_once_with_queryset_param(self):
-        self.mixin.generate_data = mock.MagicMock()
-        self.mixin.render_excel_response(queryset='test')
-        self.mixin.generate_data.assert_called_once_with(queryset='test',
-                                                         fields=None)
-
-    def test_generate_data_is_called_once_with_fields_if_provided(self):
-        self.mixin.generate_data = mock.MagicMock()
-        self.mixin.render_excel_response(queryset='test', fields='testfields')
-        self.mixin.generate_data.assert_called_once_with(queryset='test',
-                                                         fields='testfields')
 
     def test_generate_xslx_is_called_with_data(self):
         self.mixin.generate_xlsx = mock.MagicMock()
@@ -221,18 +230,6 @@ class RenderCsvResponseTests(TestCase):
         actual_disposition = response._headers['content-disposition'][1]
         assert actual_disposition == expected_disposition
 
-    def test_generate_data_is_called_once_with_queryset_param(self):
-        self.mixin.generate_data = mock.MagicMock()
-        self.mixin.render_csv_response(queryset='test')
-        self.mixin.generate_data.assert_called_once_with(queryset='test',
-                                                         fields=None)
-
-    def test_generate_data_is_called_once_with_fields_if_provided(self):
-        self.mixin.generate_data = mock.MagicMock()
-        self.mixin.render_csv_response(queryset='test', fields='testfields')
-        self.mixin.generate_data.assert_called_once_with(queryset='test',
-                                                         fields='testfields')
-
     def test_generate_csv_is_called_with_data(self):
         self.mixin.generate_csv = mock.MagicMock()
         self.mixin.render_csv_response()
@@ -256,3 +253,19 @@ class RenderCsvResponseTests(TestCase):
         assert mut.call_count == 1
         assert type(mut.call_args.__getnewargs__()[0][1]['file']) \
             == HttpResponse
+
+
+class GenerateHeadersTests(TestCase):
+
+    def setUp(self):
+        MockModelFactory()
+        self.mixin = SpreadsheetResponseMixin()
+        self.data = self.mixin.generate_data(MockModel.objects.all())
+
+    def test_generate_headers_gets_headers_from_model_name(self):
+        assert self.mixin.generate_headers(self.data) == (u'Id', u'Title')
+
+    def test_generate_headers_only_returns_fields_if_fields_is_passed(self):
+        fields = ('title',)
+        assert self.mixin.generate_headers(self.data,
+                                           fields=fields) == (u'Title', )
