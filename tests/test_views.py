@@ -269,6 +269,24 @@ class GenerateHeadersTests(TestCase):
         self.mixin = SpreadsheetResponseMixin()
         self.data = self.mixin.generate_data(MockModel.objects.all())
 
+    def test_get_fields_defined_on_view(self):
+        fields = ('title', 'summary')
+        self.mixin.fields = fields
+        assert fields == self.mixin.get_fields()
+
+    def test_get_fields_from_kwargs(self):
+        fields = ('title', 'summary')
+        assert fields == self.mixin.get_fields(fields=fields)
+
+    def test_get_fields_from_model(self):
+        model = MockModelFactory()
+        self.mixin.model = model
+        assert ['id', 'title'] == self.mixin.get_fields()
+
+    def test_get_fields_from_queryset(self):
+        self.mixin.queryset = MockModel.objects.all()
+        assert ['id', 'title'] == self.mixin.get_fields()
+
     def test_generate_headers_gets_headers_from_model_name(self):
         assert self.mixin.generate_headers(self.data) == (u'Id', u'Title')
 
