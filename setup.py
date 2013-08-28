@@ -13,7 +13,7 @@ setup(
     packages=['spreadsheetresponsemixin'],
     include_package_data=True,
     license=LICENSE,
-    description='An mixin for views with a queryset that provides a CSV/Excel export.',
+    description='A mixin for views with a queryset that provides a CSV/Excel export.',
     long_description=README,
     url='https://github.com/birdsarah/django-spreadsheetresponsemixin',
     author='Sarah Bird',
