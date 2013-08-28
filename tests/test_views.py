@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from django.http import HttpResponse
 from django.db.models.query import QuerySet
 from django.test import TestCase
@@ -135,6 +136,12 @@ class GenerateCsvTests(TestCase):
         data = (('Title is, "boo"', '2'), )
         expected_string = \
             '"Title is, ""boo""",2\r\n'
+        generated_csv = self.mixin.generate_csv(data)
+        assert generated_csv.getvalue() == expected_string
+
+    def test_handles_data_in_unicode_correctly(self):
+        data = ((u'Bumblebee is čmrlj', '2'), )
+        expected_string = u'Bumblebee is čmrlj,2\r\n'.encode('utf-8')
         generated_csv = self.mixin.generate_csv(data)
         assert generated_csv.getvalue() == expected_string
 

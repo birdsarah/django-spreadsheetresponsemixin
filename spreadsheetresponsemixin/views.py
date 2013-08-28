@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.db.models.query import QuerySet
 from openpyxl import Workbook
 from StringIO import StringIO
-import csv
+import utf8csv
 
 
 class SpreadsheetResponseMixin(object):
@@ -48,7 +48,7 @@ class SpreadsheetResponseMixin(object):
             generated_csv = StringIO()
         else:
             generated_csv = file
-        writer = csv.writer(generated_csv, dialect='excel')
+        writer = utf8csv.UnicodeWriter(generated_csv, dialect='excel')
         # Put in headers
         if headers:
             writer.writerow(headers)
