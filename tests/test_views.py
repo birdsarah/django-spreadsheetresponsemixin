@@ -149,22 +149,20 @@ class GenerateCsvTests(TestCase):
 class RenderSetupTests(TestCase):
     def setUp(self):
         self.mixin = SpreadsheetResponseMixin()
-        MockModelFactory()
-        self.queryset = MockModel.objects.all()
-        self.mixin.queryset = self.queryset
+        self.mixin.generate_headers = mock.MagicMock()
+        self.mixin.queryset = MockModel.objects.all()
+        self.fields = (u'title',)
 
     def test_generate_data_is_called_once_with_fields_and_queryset(self):
         self.mixin.generate_data = mock.MagicMock()
-        self.mixin.render_excel_response(queryset='test', fields='testfields')
+        self.mixin.render_excel_response(queryset='test', fields=self.fields)
         self.mixin.generate_data.assert_called_once_with(queryset='test',
-                                                         fields='testfields')
+                                                         fields=self.fields)
 
     def test_if_no_headers_passed_generate_headers_called(self):
-        self.mixin.generate_headers = mock.MagicMock()
-        fields = (u'title',)
-        self.mixin.render_excel_response(fields=fields)
+        self.mixin.render_excel_response(fields=self.fields)
         self.mixin.generate_headers.assert_called_once_with(self.mixin.data,
-                                                            fields=fields)
+                                                            fields=self.fields)
 
 
 class RenderExcelResponseTests(TestCase):
@@ -289,6 +287,11 @@ class GenerateHeadersTests(TestCase):
 
     def test_generate_headers_gets_headers_from_model_name(self):
         assert self.mixin.generate_headers(self.data) == (u'Id', u'Title')
+
+    def test_generate_headers_keeps_fields_order(self):
+        fields = ('title', 'id')
+        headers = self.mixin.generate_headers(self.data, fields=fields)
+        assert headers == (u'Title', u'Id')
 
     def test_generate_headers_only_returns_fields_if_fields_is_passed(self):
         fields = ('title',)

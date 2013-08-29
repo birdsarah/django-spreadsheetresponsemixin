@@ -74,11 +74,12 @@ class SpreadsheetResponseMixin(object):
         return generated_csv
 
     def generate_headers(self, data, fields=None):
-        model_fields = (field for field in data.model._meta.fields)
+        model_fields = [field for field in data.model._meta.fields]
+        model_field_dict = dict([(model.name, model)
+                                for model in model_fields])
+        print model_field_dict
         if fields:
-            model_fields = (field
-                            for field in model_fields
-                            if field.name in fields)
+            model_fields = (model_field_dict[field] for field in fields)
         field_names = (field.verbose_name.title() for field in model_fields)
         return tuple(field_names)
 
