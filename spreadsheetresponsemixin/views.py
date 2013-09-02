@@ -6,6 +6,21 @@ import utf8csv
 
 
 class SpreadsheetResponseMixin(object):
+    export_filename_root = 'export'
+
+    def get_export_filename(self, format):
+        if hasattr(self, 'export_filename'):
+            return self.export_filename
+
+        if format == 'excel':
+            ext = 'xlsx'
+        elif format == 'csv':
+            ext = 'csv'
+        else:
+            raise NotImplementedError("Unknown file type format.")
+        return "{0}.{1}".format(self.export_filename_root, ext)
+
+
     def get_fields(self, **kwargs):
         if 'fields' in kwargs:
             return kwargs['fields']
@@ -84,24 +99,28 @@ class SpreadsheetResponseMixin(object):
         return tuple(field_names)
 
     def render_excel_response(self, **kwargs):
+        filename = self.get_export_filename('excel')
         # Generate content
         self.data, self.headers = self.render_setup(**kwargs)
         # Setup response
         content_type = \
             'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         response = HttpResponse(content_type=content_type)
-        response['Content-Disposition'] = 'attachment; filename="export.xlsx"'
+        response['Content-Disposition'] = \
+            'attachment; filename="{0}"'.format(filename)
         # Add content and return response
         self.generate_xlsx(data=self.data, headers=self.headers, file=response)
         return response
 
     def render_csv_response(self, **kwargs):
+        filename = self.get_export_filename('csv')
         # Generate content
         self.data, self.headers = self.render_setup(**kwargs)
         # Build response
         content_type = 'text/csv'
         response = HttpResponse(content_type=content_type)
-        response['Content-Disposition'] = 'attachment; filename="export.csv"'
+        response['Content-Disposition'] = \
+            'attachment; filename="{0}"'.format(filename)
         # Add content to response
         self.generate_csv(data=self.data, headers=self.headers, file=response)
         return response
