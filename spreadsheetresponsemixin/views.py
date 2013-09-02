@@ -8,6 +8,13 @@ import utf8csv
 class SpreadsheetResponseMixin(object):
     export_filename_root = 'export'
 
+    def get_format(self, **kwargs):
+        if 'export_format' in kwargs:
+            return kwargs['export_format']
+        elif hasattr(self, 'export_format'):
+            return self.export_format
+        raise NotImplementedError("Export format is not defined.")
+
     def get_export_filename(self, format):
         if hasattr(self, 'export_filename'):
             return self.export_filename
@@ -124,6 +131,13 @@ class SpreadsheetResponseMixin(object):
         # Add content to response
         self.generate_csv(data=self.data, headers=self.headers, file=response)
         return response
+
+    def get_render_method(self, format):
+        if format == 'excel':
+            return self.render_excel_response
+        elif format == 'csv':
+            return self.render_csv_response
+        raise NotImplementedError("Export format is not recognized.")
 
     def render_setup(self, **kwargs):
         # Generate content
