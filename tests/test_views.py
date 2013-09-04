@@ -153,6 +153,11 @@ class RenderSetupTests(TestCase):
         self.mixin.queryset = MockModel.objects.all()
         self.fields = (u'title',)
 
+    def test_get_fields_is_called_with_kwargs(self):
+        self.mixin.get_fields = mock.MagicMock()
+        self.mixin.render_setup(a=1, b=2)
+        self.mixin.get_fields.assert_called_once_with(a=1, b=2)
+
     def test_generate_data_is_called_once_with_fields_and_queryset(self):
         self.mixin.generate_data = mock.MagicMock()
         self.mixin.render_excel_response(queryset='test', fields=self.fields)
@@ -202,6 +207,7 @@ class RenderSetupTests(TestCase):
     def test_get_render_method_raise_notimplemented_for_unknown_format(self):
         with pytest.raises(NotImplementedError):
             self.mixin.get_render_method('doc')
+
 
 class RenderExcelResponseTests(TestCase):
     def setUp(self):
@@ -311,29 +317,10 @@ class RenderCsvResponseTests(TestCase):
 
 
 class GenerateHeadersTests(TestCase):
-
     def setUp(self):
         MockModelFactory()
         self.mixin = SpreadsheetResponseMixin()
         self.data = self.mixin.generate_data(MockModel.objects.all())
-
-    def test_get_fields_defined_on_view(self):
-        fields = ('title', 'summary')
-        self.mixin.fields = fields
-        assert fields == self.mixin.get_fields()
-
-    def test_get_fields_from_kwargs(self):
-        fields = ('title', 'summary')
-        assert fields == self.mixin.get_fields(fields=fields)
-
-    def test_get_fields_from_model(self):
-        model = MockModelFactory()
-        self.mixin.model = model
-        assert ['id', 'title'] == self.mixin.get_fields()
-
-    def test_get_fields_from_queryset(self):
-        self.mixin.queryset = MockModel.objects.all()
-        assert ['id', 'title'] == self.mixin.get_fields()
 
     def test_generate_headers_gets_headers_from_model_name(self):
         assert self.mixin.generate_headers(self.data) == (u'Id', u'Title')
@@ -347,3 +334,25 @@ class GenerateHeadersTests(TestCase):
         fields = ('title',)
         assert self.mixin.generate_headers(self.data,
                                            fields=fields) == (u'Title', )
+
+
+class GetFieldsTests(TestCase):
+    def setUp(self):
+        self.mixin = SpreadsheetResponseMixin()
+
+    def test_if_fields_defined_on_view(self):
+        fields = ('title', 'summary')
+        self.mixin.fields = fields
+        assert self.mixin.get_fields() == fields
+
+    def test_get_fields_from_kwargs(self):
+        fields = ('title', 'summary')
+        assert self.mixin.get_fields(fields=fields) == fields
+
+    def test_get_fields_from_model(self):
+        self.mixin.model = MockModel
+        assert self.mixin.get_fields() == ['id', 'title']
+
+    def test_get_fields_from_queryset(self):
+        self.mixin.queryset = MockModel.objects.all()
+        assert self.mixin.get_fields() == ['id', 'title']
