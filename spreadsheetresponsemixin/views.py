@@ -2,7 +2,7 @@ from django.http import HttpResponse
 from django.db.models.query import QuerySet
 from openpyxl import Workbook
 from StringIO import StringIO
-import utf8csv
+import csv
 
 
 class SpreadsheetResponseMixin(object):
@@ -27,7 +27,6 @@ class SpreadsheetResponseMixin(object):
             raise NotImplementedError("Unknown file type format.")
         return "{0}.{1}".format(self.export_filename_root, ext)
 
-
     def get_fields(self, **kwargs):
         if 'fields' in kwargs:
             return kwargs['fields']
@@ -36,7 +35,7 @@ class SpreadsheetResponseMixin(object):
         else:
             model = None
             if hasattr(self, 'model') and self.model is not None:
-                model =  self.model
+                model = self.model
             elif hasattr(self, 'queryset') and self.queryset is not None:
                 model = self.queryset.model
             if model:
@@ -85,14 +84,14 @@ class SpreadsheetResponseMixin(object):
             generated_csv = StringIO()
         else:
             generated_csv = file
-        writer = utf8csv.UnicodeWriter(generated_csv, dialect='excel')
+        writer = csv.writer(generated_csv, dialect='excel')
         # Put in headers
         if headers:
-            writer.writerow(headers)
+            writer.writerow([unicode(s).encode('utf-8') for s in headers])
 
         # Put in data
         for row in data:
-            writer.writerow(row)
+            writer.writerow([unicode(s).encode('utf-8') for s in row])
         return generated_csv
 
     def generate_headers(self, data, fields=None):
