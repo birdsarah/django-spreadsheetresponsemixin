@@ -185,29 +185,6 @@ class RenderSetupTests(TestCase):
         actual_disposition = response._headers['content-disposition'][1]
         assert actual_disposition == expected_disposition
 
-    def test_get_format_from_kwargs(self):
-        format = 'excel'
-        assert format == self.mixin.get_format(export_format=format)
-
-    def test_get_format_from_attribute(self):
-        format = 'csv'
-        self.mixin.export_format = format
-        assert format == self.mixin.get_format()
-
-    def test_get_exel_render_for_excel_format(self):
-        format = 'excel'
-        assert self.mixin.render_excel_response \
-            == self.mixin.get_render_method(format)
-
-    def test_get_csv_render_for_csv_format(self):
-        format = 'csv'
-        assert self.mixin.render_csv_response \
-            == self.mixin.get_render_method(format)
-
-    def test_get_render_method_raise_notimplemented_for_unknown_format(self):
-        with pytest.raises(NotImplementedError):
-            self.mixin.get_render_method('doc')
-
 
 class RenderExcelResponseTests(TestCase):
     def setUp(self):
@@ -356,3 +333,38 @@ class GetFieldsTests(TestCase):
     def test_get_fields_from_queryset(self):
         self.mixin.queryset = MockModel.objects.all()
         assert self.mixin.get_fields() == ['id', 'title']
+
+
+class GetRenderMethodTest(TestCase):
+    def setUp(self):
+        self.mixin = SpreadsheetResponseMixin()
+
+    def test_raise_notimplemented_for_unknown_format(self):
+        with pytest.raises(NotImplementedError):
+            self.mixin.get_render_method('doc')
+
+    def test_returns_excel_response_method_for_excel_format(self):
+        expected_render_method = self.mixin.render_excel_response
+        assert self.mixin.get_render_method('excel') == expected_render_method
+
+    def test_csv_response_method_for_csv_format(self):
+        expected_render_method = self.mixin.render_csv_response
+        assert self.mixin.get_render_method('csv') == expected_render_method
+
+
+class GetFormatTest(TestCase):
+    def setUp(self):
+        self.mixin = SpreadsheetResponseMixin()
+
+    def test_get_format_from_export_format_kwarg(self):
+        format = 'excel'
+        assert self.mixin.get_format(export_format=format) == format
+
+    def test_get_format_from_export_format_attribute(self):
+        format = 'csv'
+        self.mixin.export_format = format
+        assert self.mixin.get_format() == format
+
+    def test_raise_notimplemented_if_export_format_not_supplied(self):
+        with pytest.raises(NotImplementedError):
+            self.mixin.get_format()
