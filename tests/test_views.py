@@ -169,21 +169,21 @@ class RenderSetupTests(TestCase):
         self.mixin.generate_headers.assert_called_once_with(self.mixin.data,
                                                             fields=self.fields)
 
-    def test_returns_attachment_with_correct_filename(self):
-        expected_disposition = 'attachment; filename="export.csv"'
-        response = self.mixin.render_csv_response()
-        actual_disposition = response._headers['content-disposition'][1]
-        assert actual_disposition == expected_disposition
-
-        self.mixin.export_filename = 'data.dump'
-        expected_disposition = 'attachment; filename="data.dump"'
-        response = self.mixin.render_csv_response()
-        actual_disposition = response._headers['content-disposition'][1]
-        assert actual_disposition == expected_disposition
-
-        response = self.mixin.render_excel_response()
-        actual_disposition = response._headers['content-disposition'][1]
-        assert actual_disposition == expected_disposition
+#    def test_returns_attachment_with_correct_filename(self):
+#        expected_disposition = 'attachment; filename="export.csv"'
+#        response = self.mixin.render_csv_response()
+#        actual_disposition = response._headers['content-disposition'][1]
+#        assert actual_disposition == expected_disposition
+#
+#        self.mixin.export_filename = 'data.dump'
+#        expected_disposition = 'attachment; filename="data.dump"'
+#        response = self.mixin.render_csv_response()
+#        actual_disposition = response._headers['content-disposition'][1]
+#        assert actual_disposition == expected_disposition
+#
+#        response = self.mixin.render_excel_response()
+#        actual_disposition = response._headers['content-disposition'][1]
+#        assert actual_disposition == expected_disposition
 
 
 class RenderExcelResponseTests(TestCase):
@@ -209,11 +209,10 @@ class RenderExcelResponseTests(TestCase):
         actual_disposition = response._headers['content-disposition'][1]
         assert actual_disposition == expected_disposition
 
-        self.mixin.export_filename_root = 'data'
-        expected_disposition = 'attachment; filename="data.xlsx"'
-        response = self.mixin.render_excel_response()
-        actual_disposition = response._headers['content-disposition'][1]
-        assert actual_disposition == expected_disposition
+    def test_get_filename_called_with_csv_parameter(self):
+        self.mixin.get_filename = mock.MagicMock()
+        self.mixin.render_excel_response()
+        self.mixin.get_filename.assert_called_once_with(extension='xlsx')
 
     def test_generate_xslx_is_called_with_data(self):
         self.mixin.generate_xlsx = mock.MagicMock()
@@ -262,11 +261,10 @@ class RenderCsvResponseTests(TestCase):
         actual_disposition = response._headers['content-disposition'][1]
         assert actual_disposition == expected_disposition
 
-        self.mixin.export_filename_root = 'data'
-        expected_disposition = 'attachment; filename="data.csv"'
-        response = self.mixin.render_csv_response()
-        actual_disposition = response._headers['content-disposition'][1]
-        assert actual_disposition == expected_disposition
+    def test_get_filename_called_with_csv_parameter(self):
+        self.mixin.get_filename = mock.MagicMock()
+        self.mixin.render_csv_response()
+        self.mixin.get_filename.assert_called_once_with(extension='csv')
 
     def test_generate_csv_is_called_with_data(self):
         self.mixin.generate_csv = mock.MagicMock()
@@ -358,13 +356,33 @@ class GetFormatTest(TestCase):
 
     def test_get_format_from_export_format_kwarg(self):
         format = 'excel'
-        assert self.mixin.get_format(export_format=format) == format
+        assert self.mixin.get_format(format=format) == format
 
     def test_get_format_from_export_format_attribute(self):
         format = 'csv'
-        self.mixin.export_format = format
+        self.mixin.format = format
         assert self.mixin.get_format() == format
 
     def test_raise_notimplemented_if_export_format_not_supplied(self):
         with pytest.raises(NotImplementedError):
             self.mixin.get_format()
+
+
+class GetFilenameTest(TestCase):
+    def setUp(self):
+        self.mixin = SpreadsheetResponseMixin()
+
+    def test_from_filename_kwarg(self):
+        filename = 'filename.kwarg'
+        assert self.mixin.get_filename(filename=filename) == filename
+
+    def test_from_filename_attribute(self):
+        filename = 'filename.attr'
+        self.mixin.filename = filename
+        assert self.mixin.get_filename() == filename
+
+    def test_default_return_with_no_extension_provided(self):
+        assert self.mixin.get_filename() == 'export.out'
+
+    def test_default_return_with_extension_provided(self):
+        assert self.mixin.get_filename(extension='blob') == 'export.blob'
