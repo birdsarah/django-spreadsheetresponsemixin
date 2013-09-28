@@ -55,11 +55,10 @@ class SpreadsheetResponseMixin(object):
         # After all that, have we got a proper queryset?
         assert isinstance(queryset, QuerySet)
 
-        list_of_lists = queryset.values_list()
         if fields:
             list_of_lists = queryset.values_list(*fields)
-
-        # Process into a list of lists ordered by the keys
+        else:
+            list_of_lists = queryset.values_list()
         return list_of_lists
 
     def generate_headers(self, data, fields=None):
