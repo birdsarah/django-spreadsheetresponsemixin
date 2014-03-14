@@ -67,6 +67,26 @@ class GenerateDataTests(TestCase):
         actual_list = self.mixin.generate_data(values_list_queryset, fields)
         assert list(actual_list) == list(expected_list)
 
+    def test_follows_foreign_key_with_model_queryset(self):
+        fields = ('title', 'author__name')
+        queryset = MockModel.objects.all()
+        expected_list = [
+            (self.mock.title, self.author.name),
+            (self.mock2.title, self.author.name),
+        ]
+        actual_list = self.mixin.generate_data(queryset, fields)
+        assert list(actual_list) == list(expected_list)
+
+    def test_follows_foreign_key_with_values_list_queryset(self):
+        fields = ('title', 'author__name')
+        values_list_queryset = MockModel.objects.all().values_list()
+        expected_list = [
+            (self.mock.title, self.author.name),
+            (self.mock2.title, self.author.name),
+        ]
+        actual_list = self.mixin.generate_data(values_list_queryset, fields)
+        assert list(actual_list) == list(expected_list)
+
     def test_reverse_ordering_when_fields_specified(self):
         fields = ('title', 'id')
         actual_list = self.mixin.generate_data(self.queryset, fields)
