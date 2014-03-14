@@ -61,14 +61,26 @@ class SpreadsheetResponseMixin(object):
             list_of_lists = queryset.values_list()
         return list_of_lists
 
+    def recursively_build_field_name(self, current_model, remaining_path):
+        get_field = lambda name: current_model._meta.get_field(name)
+
+        if '__' in remaining_path:
+            foreign_key_name, path_in_related_model = remaining_path.split('__', 2)
+            foreign_key_field = get_field(foreign_key_name)
+            related_model = foreign_key_field.rel.to
+            return [foreign_key_field.verbose_name] + \
+                self.recursively_build_field_name(related_model, path_in_related_model)
+        else:
+            return [get_field(remaining_path).verbose_name]
+
+    def build_field_name(self, model, path):
+        name_parts = self.recursively_build_field_name(model, path)
+        return ' '.join(name_parts).title()
+
     def generate_headers(self, data, fields=None):
-        model_fields = [field for field in data.model._meta.fields]
-        model_field_dict = dict([(model.name, model)
-                                for model in model_fields])
-        if fields:
-            model_fields = (model_field_dict[field] for field in fields)
-        field_names = (field.verbose_name.title() for field in model_fields)
-        return tuple(field_names)
+        if fields is None:
+            fields = self.get_fields(data.model)
+        return tuple(self.build_field_name(data.model, field) for field in fields)
 
     def generate_xlsx(self, data, headers=None, file=None):
         wb = Workbook()
@@ -127,21 +139,20 @@ class SpreadsheetResponseMixin(object):
         extension = kwargs.get('extension', 'out')
         return "{0}.{1}".format(default_filename, extension)
 
-    def get_fields(self, **kwargs):
+    def get_fields(self, model=None, **kwargs):
         if 'fields' in kwargs:
             return kwargs['fields']
         elif hasattr(self, 'fields') and self.fields is not None:
             return self.fields
         else:
-            model = None
-
-            if hasattr(self, 'model') and self.model is not None:
-                model = self.model
-            elif hasattr(self, 'queryset') and self.queryset is not None:
+            if hasattr(self, 'queryset') and self.queryset is not None:
                 if hasattr(self.queryset, 'field_names'):
                     return self.queryset.field_names
                 else:
                     model = self.queryset.model
+            
+            if model is None and hasattr(self, 'model') and self.model is not None:
+                model = self.model
             
             if model:
                 return [f.name for f in model._meta.fields]

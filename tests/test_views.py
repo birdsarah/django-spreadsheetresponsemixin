@@ -336,6 +336,11 @@ class GenerateHeadersTests(TestCase):
         assert self.mixin.generate_headers(self.data,
                                            fields=fields) == (u'Title', )
 
+    def test_generate_headers_follows_foreign_keys(self):
+        fields = ('title', 'author__name')
+        headers = self.mixin.generate_headers(self.data, fields)
+        assert headers == (u'Title', u'Author Name')
+
 
 class GetFieldsTests(TestCase):
     def setUp(self):
