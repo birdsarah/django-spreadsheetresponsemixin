@@ -9,7 +9,7 @@ import factory
 from openpyxl import Workbook
 
 from spreadsheetresponsemixin import SpreadsheetResponseMixin
-from .models import MockModel
+from .models import MockModel, MockAuthor
 
 
 class MockModelFactory(factory.django.DjangoModelFactory):
@@ -17,11 +17,17 @@ class MockModelFactory(factory.django.DjangoModelFactory):
     title = factory.Sequence(lambda n: 'title{0}'.format(n))
 
 
+class MockAuthorFactory(factory.django.DjangoModelFactory):
+    FACTORY_FOR = MockAuthor
+    name = factory.Sequence(lambda n: 'name{0}'.format(n))
+
+
 class GenerateDataTests(TestCase):
     def setUp(self):
         self.mixin = SpreadsheetResponseMixin()
-        self.mock = MockModelFactory()
-        self.mock2 = MockModelFactory()
+        self.author = MockAuthorFactory()
+        self.mock = MockModelFactory(author=self.author)
+        self.mock2 = MockModelFactory(author=self.author)
         self.queryset = MockModel.objects.all()
 
     def test_assertion_error_raised_if_not_a_queryset_is_sent(self):
@@ -241,7 +247,8 @@ class RenderExcelResponseTests(TestCase):
 
 class RenderCsvResponseTests(TestCase):
     def setUp(self):
-        MockModelFactory()
+        self.author = MockAuthorFactory()
+        MockModelFactory(author=self.author)
         self.queryset = MockModel.objects.all()
         self.mixin = SpreadsheetResponseMixin()
         self.mixin.queryset = self.queryset
@@ -267,10 +274,9 @@ class RenderCsvResponseTests(TestCase):
         self.mixin.get_filename.assert_called_once_with(extension='csv')
 
     def test_generate_csv_is_called_with_data(self):
-        self.mixin.generate_csv = mock.MagicMock()
+        mut = self.mixin.generate_csv = mock.MagicMock()
         self.mixin.render_csv_response()
         data = self.mixin.generate_data(self.queryset)
-        mut = self.mixin.generate_csv
         assert mut.call_count == 1
         assert list(mut.call_args.__getnewargs__()[0][1]['data']) == list(data)
 
@@ -298,7 +304,7 @@ class GenerateHeadersTests(TestCase):
         self.data = self.mixin.generate_data(MockModel.objects.all())
 
     def test_generate_headers_gets_headers_from_model_name(self):
-        assert self.mixin.generate_headers(self.data) == (u'Id', u'Title')
+        assert self.mixin.generate_headers(self.data) == (u'Id', u'Title', u'Author')
 
     def test_generate_headers_keeps_fields_order(self):
         fields = ('title', 'id')
@@ -324,13 +330,21 @@ class GetFieldsTests(TestCase):
         fields = ('title', 'summary')
         assert self.mixin.get_fields(fields=fields) == fields
 
-    def test_get_fields_from_model(self):
+    def test_get_fields_from_model_in_declared_order(self):
         self.mixin.model = MockModel
-        assert self.mixin.get_fields() == ['id', 'title']
+        assert self.mixin.get_fields() == ['id', 'title', 'author']
 
     def test_get_fields_from_queryset(self):
         self.mixin.queryset = MockModel.objects.all()
-        assert self.mixin.get_fields() == ['id', 'title']
+        assert self.mixin.get_fields() == ['id', 'title', 'author']
+
+    def test_get_fields_from_values_list_queryset(self):
+        self.mixin.queryset = MockModel.objects.all().values_list()
+        assert self.mixin.get_fields() == ['id', 'title', 'author_id']
+
+    def test_get_fields_from_values_list_queryset_with_specific_fields(self):
+        self.mixin.queryset = MockModel.objects.all().values_list('author', 'title')
+        assert self.mixin.get_fields() == ['author', 'title']
 
 
 class GetRenderMethodTest(TestCase):

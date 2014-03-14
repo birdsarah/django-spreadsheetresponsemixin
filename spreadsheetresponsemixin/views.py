@@ -134,10 +134,16 @@ class SpreadsheetResponseMixin(object):
             return self.fields
         else:
             model = None
+
             if hasattr(self, 'model') and self.model is not None:
                 model = self.model
             elif hasattr(self, 'queryset') and self.queryset is not None:
-                model = self.queryset.model
+                if hasattr(self.queryset, 'field_names'):
+                    return self.queryset.field_names
+                else:
+                    model = self.queryset.model
+            
             if model:
-                return model._meta.get_all_field_names()
+                return [f.name for f in model._meta.fields]
+
         return ()
