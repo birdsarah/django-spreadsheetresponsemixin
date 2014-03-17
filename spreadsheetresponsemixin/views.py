@@ -56,46 +56,79 @@ class SpreadsheetResponseMixin(object):
                 )
         return queryset
 
+    def recursively_extract_value(self, current_instance, remaining_path):
+        if '__' in remaining_path:
+            foreign_key_name, path_in_related_instance = remaining_path.split('__', 2)
+            related_instance = getattr(current_instance, foreign_key_name)
+            return self.recursively_extract_value(related_instance, path_in_related_instance)
+        else:
+            return getattr(current_instance, remaining_path)
+
     def generate_data(self, queryset=None, fields=None):
         queryset = self.get_queryset(queryset)
 
         # After all that, have we got a proper queryset?
         assert isinstance(queryset, QuerySet)
 
-        if fields:
-            columns = []
+        if getattr(self, 'use_models', False):
+            fields = self.get_fields(fields=fields, queryset=queryset)
+            return self.generate_data_using_models(queryset, fields)
+        elif fields:
+            return self.generate_data_using_fields(queryset, fields)
+        else:
+            return self.generate_data_using_values(queryset)
 
-            # For each field, contains the virtual field name, and the starting
-            # offset and length of the database columns used to evaluate it.
-            # If the field is calculated (a method on self), it can have any
-            # length, otherwise the length will be 1, and the value returned by
-            # values_list() will be indexed at that location and returned directly.
-            field_maps = []
+    def generate_data_using_models(self, queryset, fields):
+        for model_instance in queryset:
+            row = []
 
             for field in fields:
                 calculated = self.get_calculated_field(field)
-
                 if calculated:
-                    field_map = (field, calculated, len(columns))
-                    columns += calculated.fields
-                    field_maps.append(field_map)
+                    value = calculated(model_instance)
                 else:
-                    field_map = (field, None, len(columns))
-                    columns.append(field)
-                    field_maps.append(field_map)
-                
-            for row in queryset.values_list(*columns):
-                values_out = []
-                for field, calculated, offset in field_maps:
-                    if calculated is None:
-                        values_out.append(row[offset])
-                    else:
-                        length = len(calculated.fields)
-                        values_out.append(calculated(row[offset:offset+length]))
-                yield tuple(values_out)
-        else:
-            for row in queryset.values_list():
-                yield row
+                    value = self.recursively_extract_value(model_instance, field)
+                    if value and callable(value):
+                        value = value()
+                row.append(value)
+
+            yield tuple(row)
+
+    def generate_data_using_fields(self, queryset, fields):
+        columns = []
+
+        # For each field, contains the virtual field name, and the starting
+        # offset and length of the database columns used to evaluate it.
+        # If the field is calculated (a method on self), it can have any
+        # length, otherwise the length will be 1, and the value returned by
+        # values_list() will be indexed at that location and returned directly.
+        field_maps = []
+
+        for field in fields:
+            calculated = self.get_calculated_field(field)
+
+            if calculated:
+                field_map = (field, calculated, len(columns))
+                columns += calculated.fields
+                field_maps.append(field_map)
+            else:
+                field_map = (field, None, len(columns))
+                columns.append(field)
+                field_maps.append(field_map)
+            
+        for row in queryset.values_list(*columns):
+            values_out = []
+            for field, calculated, offset in field_maps:
+                if calculated is None:
+                    values_out.append(row[offset])
+                else:
+                    length = len(calculated.fields)
+                    values_out.append(calculated(row[offset:offset+length]))
+            yield tuple(values_out)
+
+    def generate_data_using_values(self, queryset):
+        for row in queryset.values_list():
+            yield row
 
     def recursively_build_field_name(self, current_model, remaining_path):
         get_field = lambda name: current_model._meta.get_field(name)

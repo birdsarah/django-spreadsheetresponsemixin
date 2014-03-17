@@ -106,6 +106,20 @@ class GenerateDataTests(TestCase):
         actual_list = self.mixin.generate_data(self.queryset, fields)
         assert list(actual_list)[0] == (self.mock.title, self.mock.id)
 
+    def test_allows_evaluation_using_models(self):
+        fields = ('title', 'author__name', 'calculated')
+        queryset = MockModel.objects.all()
+        expected_list = [
+            (self.mock.title, self.author.name, u'whee %d' % self.mock.id),
+            (self.mock2.title, self.author.name, u'whee %d' % self.mock2.id),
+        ]
+
+        self.mixin.use_models = True
+        self.mixin.calculated = lambda model: 'whee %d' % model.id
+
+        actual_list = self.mixin.generate_data(queryset, fields)
+        self.assertEqual(list(actual_list), expected_list)
+
 
 class GenerateXlsxTests(TestCase):
     def setUp(self):
