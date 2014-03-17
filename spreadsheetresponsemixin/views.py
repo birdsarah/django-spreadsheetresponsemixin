@@ -36,7 +36,7 @@ class SpreadsheetResponseMixin(object):
 
     def render_setup(self, **kwargs):
         # Generate content
-        queryset = kwargs.get('queryset')
+        queryset = self.get_queryset(kwargs.get('queryset'))
         fields = self.get_fields(**kwargs)
         data = self.generate_data(queryset=queryset, fields=fields)
         headers = kwargs.get('headers')
@@ -44,14 +44,19 @@ class SpreadsheetResponseMixin(object):
             headers = self.generate_headers(data, fields=fields)
         return data, headers
 
-    def generate_data(self, queryset=None, fields=None):
-        if not queryset:
+    def get_queryset(self, queryset=None):
+        if queryset is None:
             try:
                 queryset = self.queryset
             except AttributeError:
                 raise NotImplementedError(
                     "You must provide a queryset on the class or pass it in."
                 )
+        return queryset
+
+    def generate_data(self, queryset=None, fields=None):
+        queryset = self.get_queryset(queryset)
+
         # After all that, have we got a proper queryset?
         assert isinstance(queryset, QuerySet)
 
