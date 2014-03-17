@@ -77,6 +77,20 @@ class GenerateDataTests(TestCase):
         actual_list = self.mixin.generate_data(queryset, fields)
         assert list(actual_list) == list(expected_list)
 
+    def test_allows_calculated_field_values(self):
+        fields = ('title', 'author__name', 'calculated')
+        queryset = MockModel.objects.all()
+        expected_list = [
+            (self.mock.title, self.author.name, u'whee %d' % self.mock.id),
+            (self.mock2.title, self.author.name, u'whee %d' % self.mock2.id),
+        ]
+
+        self.mixin.calculated = lambda values: 'whee %d' % values[0]
+        self.mixin.calculated.fields = ['id']
+
+        actual_list = self.mixin.generate_data(queryset, fields)
+        self.assertEqual(list(actual_list), expected_list)
+
     def test_follows_foreign_key_with_values_list_queryset(self):
         fields = ('title', 'author__name')
         values_list_queryset = MockModel.objects.all().values_list()

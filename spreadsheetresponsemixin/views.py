@@ -63,8 +63,36 @@ class SpreadsheetResponseMixin(object):
         assert isinstance(queryset, QuerySet)
 
         if fields:
-            for row in queryset.values_list(*fields):
-                yield row
+            columns = []
+
+            # For each field, contains the virtual field name, and the starting
+            # offset and length of the database columns used to evaluate it.
+            # If the field is calculated (a method on self), it can have any
+            # length, otherwise the length will be 1, and the value returned by
+            # values_list() will be indexed at that location and returned directly.
+            field_maps = []
+
+            for field in fields:
+                calculated = getattr(self, field, None)
+
+                if calculated and callable(calculated):
+                    field_map = (field, calculated, len(columns))
+                    columns += calculated.fields
+                    field_maps.append(field_map)
+                else:
+                    field_map = (field, None, len(columns))
+                    columns.append(field)
+                    field_maps.append(field_map)
+                
+            for row in queryset.values_list(*columns):
+                values_out = []
+                for field, calculated, offset in field_maps:
+                    if calculated is None:
+                        values_out.append(row[offset])
+                    else:
+                        length = len(calculated.fields)
+                        values_out.append(calculated(row[offset:offset+length]))
+                yield tuple(values_out)
         else:
             for row in queryset.values_list():
                 yield row
