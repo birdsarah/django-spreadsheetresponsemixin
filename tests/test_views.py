@@ -32,16 +32,16 @@ class GenerateDataTests(TestCase):
 
     def test_assertion_error_raised_if_not_a_queryset_is_sent(self):
         with pytest.raises(AssertionError):
-            self.mixin.generate_data([1])
+            list(self.mixin.generate_data([1]))
 
     def test_if_queryset_is_none_gets_self_queryset(self):
-        self.mixin.queryset = mock.Mock(spec=QuerySet)
-        self.mixin.generate_data()
-        self.mixin.queryset.values_list.assert_called_once_with()
+        self.mixin.queryset = MockModel.objects.all()
+        self.assertSequenceEqual(MockModel.objects.values_list(), 
+            list(self.mixin.generate_data()))
 
     def test_if_no_self_queryset_raise_improperlyconfigured(self):
         with pytest.raises(NotImplementedError):
-            self.mixin.generate_data()
+            list(self.mixin.generate_data())
 
     def test_returns_values_list_qs_if_queryset(self):
         expected_list = self.queryset.values_list()
@@ -90,7 +90,7 @@ class GenerateDataTests(TestCase):
     def test_reverse_ordering_when_fields_specified(self):
         fields = ('title', 'id')
         actual_list = self.mixin.generate_data(self.queryset, fields)
-        assert actual_list[0] == (self.mock.title, self.mock.id)
+        assert list(actual_list)[0] == (self.mock.title, self.mock.id)
 
 
 class GenerateXlsxTests(TestCase):

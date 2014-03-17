@@ -63,10 +63,11 @@ class SpreadsheetResponseMixin(object):
         assert isinstance(queryset, QuerySet)
 
         if fields:
-            list_of_lists = queryset.values_list(*fields)
+            for row in queryset.values_list(*fields):
+                yield row
         else:
-            list_of_lists = queryset.values_list()
-        return list_of_lists
+            for row in queryset.values_list():
+                yield row
 
     def recursively_build_field_name(self, current_model, remaining_path):
         get_field = lambda name: current_model._meta.get_field(name)
