@@ -36,25 +36,28 @@ class SpreadsheetResponseMixin(object):
 
     def render_setup(self, **kwargs):
         # Generate content
-        queryset = self.get_queryset(kwargs.get('queryset'))
+        if 'queryset' in kwargs:
+            self.queryset = kwargs['queryset']
+
+        if not hasattr(self, 'queryset') and 'model' in kwargs:
+            self.queryset = model.objects.all()
+            
+        if not hasattr(self, 'queryset') and hasattr(self, 'model'):
+            self.queryset = self.model.objects.all()
+            
+        if not hasattr(self, 'queryset'):
+            raise NotImplementedError(
+                "You must provide a queryset or model on the class, or pass one in."
+            )
+
         fields = self.get_fields(**kwargs)
-        data = self.generate_data(queryset=queryset, fields=fields)
+        data = self.generate_data(fields=fields)
 
         headers = kwargs.get('headers')
         if not headers:
-            headers = self.generate_headers(queryset.model, fields=fields)
+            headers = self.generate_headers(self.queryset.model, fields=fields)
 
         return data, headers
-
-    def get_queryset(self, queryset=None):
-        if queryset is None:
-            try:
-                queryset = self.queryset
-            except AttributeError:
-                raise NotImplementedError(
-                    "You must provide a queryset on the class or pass it in."
-                )
-        return queryset
 
     def recursively_extract_value(self, current_instance, remaining_path):
         if '__' in remaining_path:
@@ -64,22 +67,20 @@ class SpreadsheetResponseMixin(object):
         else:
             return getattr(current_instance, remaining_path)
 
-    def generate_data(self, queryset=None, fields=None):
-        queryset = self.get_queryset(queryset)
-
+    def generate_data(self, fields=None):
         # After all that, have we got a proper queryset?
-        assert isinstance(queryset, QuerySet)
+        assert isinstance(self.queryset, QuerySet)
 
         if getattr(self, 'use_models', False):
-            fields = self.get_fields(fields=fields, queryset=queryset)
-            return self.generate_data_using_models(queryset, fields)
+            fields = self.get_fields(fields=fields)
+            return self.generate_data_using_models(fields)
         elif fields:
-            return self.generate_data_using_fields(queryset, fields)
+            return self.generate_data_using_fields(fields)
         else:
-            return self.generate_data_using_values(queryset)
+            return self.generate_data_using_values()
 
-    def generate_data_using_models(self, queryset, fields):
-        for model_instance in queryset:
+    def generate_data_using_models(self, fields):
+        for model_instance in self.queryset:
             row = []
 
             for field in fields:
@@ -94,7 +95,7 @@ class SpreadsheetResponseMixin(object):
 
             yield tuple(row)
 
-    def generate_data_using_fields(self, queryset, fields):
+    def generate_data_using_fields(self, fields):
         columns = []
 
         # For each field, contains the virtual field name, and the starting
@@ -116,7 +117,7 @@ class SpreadsheetResponseMixin(object):
                 columns.append(field)
                 field_maps.append(field_map)
             
-        for row in queryset.values_list(*columns):
+        for row in self.queryset.values_list(*columns):
             values_out = []
             for field, calculated, offset in field_maps:
                 if calculated is None:
@@ -126,8 +127,8 @@ class SpreadsheetResponseMixin(object):
                     values_out.append(calculated(row[offset:offset+length]))
             yield tuple(values_out)
 
-    def generate_data_using_values(self, queryset):
-        for row in queryset.values_list():
+    def generate_data_using_values(self):
+        for row in self.queryset.values_list():
             yield row
 
     def recursively_build_field_name(self, current_model, remaining_path):
@@ -225,17 +226,8 @@ class SpreadsheetResponseMixin(object):
             return kwargs['fields']
         elif hasattr(self, 'fields') and self.fields is not None:
             return self.fields
+        elif hasattr(self.queryset, 'field_names'):
+            return self.queryset.field_names
         else:
-            if hasattr(self, 'queryset') and self.queryset is not None:
-                if hasattr(self.queryset, 'field_names'):
-                    return self.queryset.field_names
-                else:
-                    model = self.queryset.model
-            
-            if model is None and hasattr(self, 'model') and self.model is not None:
-                model = self.model
-            
-            if model:
-                return [f.name for f in model._meta.fields]
-
-        return ()
+            model = self.queryset.model
+            return [f.name for f in model._meta.fields]
