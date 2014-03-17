@@ -357,6 +357,19 @@ class GenerateHeadersTests(TestCase):
         headers = self.mixin.generate_headers(MockModel, fields)
         assert headers == (u'Title', u'Author Name')
 
+    def test_generate_headers_with_calculated_fields(self):
+        fields = ('title', 'author__name', 'calculate_this')
+        self.mixin.calculate_this = lambda values: 'whee %d' % values[0]
+        headers = self.mixin.generate_headers(MockModel, fields)
+        assert headers == (u'Title', u'Author Name', u'Calculate This')
+
+    def test_generate_headers_with_calculated_fields_with_verbose_names(self):
+        fields = ('title', 'author__name', 'calculate_this')
+        self.mixin.calculate_this = lambda values: 'whee %d' % values[0]
+        self.mixin.calculate_this.verbose_name = 'Whee!'
+        headers = self.mixin.generate_headers(MockModel, fields)
+        assert headers == (u'Title', u'Author Name', u'Whee!')
+
 
 class GetFieldsTests(TestCase):
     def setUp(self):

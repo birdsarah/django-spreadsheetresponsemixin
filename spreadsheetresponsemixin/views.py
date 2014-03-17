@@ -73,9 +73,9 @@ class SpreadsheetResponseMixin(object):
             field_maps = []
 
             for field in fields:
-                calculated = getattr(self, field, None)
+                calculated = self.get_calculated_field(field)
 
-                if calculated and callable(calculated):
+                if calculated:
                     field_map = (field, calculated, len(columns))
                     columns += calculated.fields
                     field_maps.append(field_map)
@@ -109,9 +109,23 @@ class SpreadsheetResponseMixin(object):
         else:
             return [get_field(remaining_path).verbose_name]
 
+    def get_calculated_field(self, field_name):
+        calculated_field = getattr(self, field_name, None)
+        if calculated_field and callable(calculated_field):
+            return calculated_field
+        else:
+            return None
+        
     def build_field_name(self, model, path):
-        name_parts = self.recursively_build_field_name(model, path)
-        return ' '.join(name_parts).title()
+        calculated_field = self.get_calculated_field(path)
+        if calculated_field:
+            if hasattr(calculated_field, 'verbose_name'):
+                return calculated_field.verbose_name
+            else:
+                return path.replace('_', ' ').title()
+        else:
+            name_parts = self.recursively_build_field_name(model, path)
+            return ' '.join(name_parts).title()
 
     def generate_headers(self, model, fields):
         return tuple(self.build_field_name(model, field) for field in fields)
