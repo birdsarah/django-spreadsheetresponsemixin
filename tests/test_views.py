@@ -186,9 +186,10 @@ class RenderSetupTests(TestCase):
 
     def test_generate_data_is_called_once_with_fields_and_queryset(self):
         self.mixin.generate_data = mock.MagicMock()
-        self.mixin.render_excel_response(queryset='test', fields=self.fields)
-        self.mixin.generate_data.assert_called_once_with(queryset='test',
-                                                         fields=self.fields)
+        qs = MockModel.objects.all()
+        self.mixin.render_excel_response(queryset=qs, fields=self.fields)
+        self.mixin.generate_data.assert_called_once_with(queryset=qs,
+            fields=self.fields)
 
     def test_if_no_headers_passed_generate_headers_called(self):
         self.mixin.render_excel_response(fields=self.fields)
