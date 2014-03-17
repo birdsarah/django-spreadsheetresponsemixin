@@ -193,7 +193,7 @@ class RenderSetupTests(TestCase):
 
     def test_if_no_headers_passed_generate_headers_called(self):
         self.mixin.render_excel_response(fields=self.fields)
-        self.mixin.generate_headers.assert_called_once_with(self.mixin.data,
+        self.mixin.generate_headers.assert_called_once_with(MockModel,
                                                             fields=self.fields)
 
 #    def test_returns_attachment_with_correct_filename(self):
@@ -325,21 +325,22 @@ class GenerateHeadersTests(TestCase):
         self.data = self.mixin.generate_data(MockModel.objects.all())
 
     def test_generate_headers_gets_headers_from_model_name(self):
-        assert self.mixin.generate_headers(self.data) == (u'Id', u'Title', u'Author')
+        fields = self.mixin.get_fields(model=MockModel)
+        assert self.mixin.generate_headers(MockModel, fields) == (u'Id', u'Title', u'Author')
 
     def test_generate_headers_keeps_fields_order(self):
         fields = ('title', 'id')
-        headers = self.mixin.generate_headers(self.data, fields=fields)
+        headers = self.mixin.generate_headers(MockModel, fields=fields)
         assert headers == (u'Title', u'Id')
 
     def test_generate_headers_only_returns_fields_if_fields_is_passed(self):
         fields = ('title',)
-        assert self.mixin.generate_headers(self.data,
+        assert self.mixin.generate_headers(MockModel,
                                            fields=fields) == (u'Title', )
 
     def test_generate_headers_follows_foreign_keys(self):
         fields = ('title', 'author__name')
-        headers = self.mixin.generate_headers(self.data, fields)
+        headers = self.mixin.generate_headers(MockModel, fields)
         assert headers == (u'Title', u'Author Name')
 
 

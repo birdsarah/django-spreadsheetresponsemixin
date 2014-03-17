@@ -39,9 +39,11 @@ class SpreadsheetResponseMixin(object):
         queryset = self.get_queryset(kwargs.get('queryset'))
         fields = self.get_fields(**kwargs)
         data = self.generate_data(queryset=queryset, fields=fields)
+
         headers = kwargs.get('headers')
         if not headers:
-            headers = self.generate_headers(data, fields=fields)
+            headers = self.generate_headers(queryset.model, fields=fields)
+
         return data, headers
 
     def get_queryset(self, queryset=None):
@@ -82,10 +84,8 @@ class SpreadsheetResponseMixin(object):
         name_parts = self.recursively_build_field_name(model, path)
         return ' '.join(name_parts).title()
 
-    def generate_headers(self, data, fields=None):
-        if fields is None:
-            fields = self.get_fields(data.model)
-        return tuple(self.build_field_name(data.model, field) for field in fields)
+    def generate_headers(self, model, fields):
+        return tuple(self.build_field_name(model, field) for field in fields)
 
     def generate_xlsx(self, data, headers=None, file=None):
         wb = Workbook()
