@@ -6,6 +6,7 @@ import csv
 
 
 class SpreadsheetResponseMixin(object):
+    filename_base = 'export'
 
     def render_excel_response(self, **kwargs):
         filename = self.get_filename(extension='xlsx')
@@ -217,9 +218,9 @@ class SpreadsheetResponseMixin(object):
             return kwargs['filename']
         if hasattr(self, 'filename'):
             return self.filename
-        default_filename = 'export'
+
         extension = kwargs.get('extension', 'out')
-        return "{0}.{1}".format(default_filename, extension)
+        return "{0}.{1}".format(self.filename_base, extension)
 
     def get_fields(self, model=None, **kwargs):
         if 'fields' in kwargs:

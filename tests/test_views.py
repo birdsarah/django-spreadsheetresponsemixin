@@ -233,21 +233,36 @@ class RenderSetupTests(TestCase):
         self.mixin.generate_headers.assert_called_once_with(MockModel,
                                                             fields=self.fields)
 
-#    def test_returns_attachment_with_correct_filename(self):
-#        expected_disposition = 'attachment; filename="export.csv"'
-#        response = self.mixin.render_csv_response()
-#        actual_disposition = response._headers['content-disposition'][1]
-#        assert actual_disposition == expected_disposition
-#
-#        self.mixin.export_filename = 'data.dump'
-#        expected_disposition = 'attachment; filename="data.dump"'
-#        response = self.mixin.render_csv_response()
-#        actual_disposition = response._headers['content-disposition'][1]
-#        assert actual_disposition == expected_disposition
-#
-#        response = self.mixin.render_excel_response()
-#        actual_disposition = response._headers['content-disposition'][1]
-#        assert actual_disposition == expected_disposition
+    def test_returns_attachment_with_correct_filename(self):
+        expected_disposition = 'attachment; filename="export.csv"'
+        response = self.mixin.render_csv_response()
+        actual_disposition = response._headers['content-disposition'][1]
+        assert actual_disposition == expected_disposition
+
+        self.mixin.filename = 'data.dump'
+
+        expected_disposition = 'attachment; filename="data.dump"'
+        response = self.mixin.render_csv_response()
+        actual_disposition = response._headers['content-disposition'][1]
+        assert actual_disposition == expected_disposition
+
+        expected_disposition = 'attachment; filename="data.dump"'
+        response = self.mixin.render_excel_response()
+        actual_disposition = response._headers['content-disposition'][1]
+        assert actual_disposition == expected_disposition
+
+        delattr(self.mixin, 'filename')
+        self.mixin.filename_base = 'data.dump'
+
+        expected_disposition = 'attachment; filename="data.dump.csv"'
+        response = self.mixin.render_csv_response()
+        actual_disposition = response._headers['content-disposition'][1]
+        assert actual_disposition == expected_disposition
+
+        expected_disposition = 'attachment; filename="data.dump.xlsx"'
+        response = self.mixin.render_excel_response()
+        actual_disposition = response._headers['content-disposition'][1]
+        assert actual_disposition == expected_disposition
 
 
 class RenderExcelResponseTests(TestCase):
