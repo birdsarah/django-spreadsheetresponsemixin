@@ -78,12 +78,12 @@ class SpreadsheetResponseMixin(object):
         rowoffset = 0
         if headers:
             rowoffset = 1
-            for c, headerval in enumerate(headers):
-                ws.cell(row=0, column=c).value = headerval
+            for c, headerval in enumerate(headers, 1):
+                ws.cell(row=1, column=c).value = headerval
 
         # Put in data
-        for r, row in enumerate(data):
-            for c, cellval in enumerate(row):
+        for r, row in enumerate(data, 1):
+            for c, cellval in enumerate(row, 1):
                 ws.cell(row=r + rowoffset, column=c).value = cellval
         if file:
             wb.save(file)

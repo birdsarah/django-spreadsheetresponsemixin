@@ -9,7 +9,7 @@ os.chdir(os.path.normpath(os.path.join(os.path.abspath(__file__), os.pardir)))
 
 setup(
     name='django-spreadsheetresponsemixin',
-    version='0.1.8',
+    version='0.1.9',
     packages=['spreadsheetresponsemixin'],
     include_package_data=True,
     license=LICENSE,
@@ -18,7 +18,7 @@ setup(
     url='https://github.com/birdsarah/django-spreadsheetresponsemixin',
     author='Sarah Bird',
     author_email='sarah@bonvaya.com',
-    install_requires=['django>=1.5', 'openpyxl>=1.6.2'],
+    install_requires=['django>=1.5', 'openpyxl>=2.0.3'],
     classifiers=[
                 'Development Status :: 3 - Alpha',
                 'Environment :: Web Environment',
