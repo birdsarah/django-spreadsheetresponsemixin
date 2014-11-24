@@ -139,10 +139,10 @@ class SpreadsheetResponseMixin(object):
             foreign_key_name, path_in_related_model = remaining_path.split('__', 2)
             foreign_key_field = get_field(foreign_key_name)
             related_model = foreign_key_field.rel.to
-            return [foreign_key_field.verbose_name] + \
+            return [unicode(foreign_key_field.verbose_name)] + \
                 self.recursively_build_field_name(related_model, path_in_related_model)
         else:
-            return [get_field(remaining_path).verbose_name]
+            return [unicode(get_field(remaining_path).verbose_name)]
 
     def get_calculated_field(self, field_name):
         calculated_field = getattr(self, field_name, None)
