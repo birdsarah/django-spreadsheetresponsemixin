@@ -3,6 +3,8 @@ django-spreadsheetresponsemixin
 
 View mixin for django, that generates a csv or excel sheet.
 
+[![Build Status on Travis](https://travis-ci.org/aptivate/django-spreadsheetresponsemixin.svg?branch=master)](https://travis-ci.org/aptivate/django-spreadsheetresponsemixin)
+
 Usage
 =====
 
