@@ -42,10 +42,10 @@ class SpreadsheetResponseMixin(object):
 
         if not hasattr(self, 'queryset') and 'model' in kwargs:
             self.queryset = model.objects.all()
-            
+
         if not hasattr(self, 'queryset') and hasattr(self, 'model'):
             self.queryset = self.model.objects.all()
-            
+
         if not hasattr(self, 'queryset'):
             raise NotImplementedError(
                 "You must provide a queryset or model on the class, or pass one in."
@@ -117,7 +117,7 @@ class SpreadsheetResponseMixin(object):
                 field_map = (field, None, len(columns))
                 columns.append(field)
                 field_maps.append(field_map)
-            
+
         for row in self.queryset.values_list(*columns):
             values_out = []
             for field, calculated, offset in field_maps:
@@ -150,7 +150,7 @@ class SpreadsheetResponseMixin(object):
             return calculated_field
         else:
             return None
-        
+
     def build_field_name(self, model, path):
         calculated_field = self.get_calculated_field(path)
         if calculated_field:
