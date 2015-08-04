@@ -5,6 +5,12 @@ View mixin for django, that generates a csv or excel sheet.
 
 [![Build Status on Travis](https://travis-ci.org/aptivate/django-spreadsheetresponsemixin.svg?branch=master)](https://travis-ci.org/aptivate/django-spreadsheetresponsemixin)
 
+Installation
+============
+
+    pip install django-spreadsheetresponsemixin
+
+
 Usage
 =====
 
@@ -31,3 +37,9 @@ Exported file will be named export.csv or export.xlsx by default, but you can
 change this by either specifying export\_filename attribute to name exported
 file or export\_filename\_root to specify only the root part of it (and
 let app take care of the appropriate extension).
+
+
+Changelog
+=========
+
+Not available for 0.1.10 and earlier - sorry :s
