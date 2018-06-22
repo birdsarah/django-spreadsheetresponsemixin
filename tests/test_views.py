@@ -147,15 +147,15 @@ class GenerateXlsxTests(TestCase):
     def test_adds_row_of_data(self):
         wb = self.mixin.generate_xlsx(self.data)
         ws = self._get_sheet(wb)
-        assert ws.cell('A1').value == 'row1col1'
-        assert ws.cell('B2').value == 'row2col2'
+        assert ws.cell(column=1, row=1).value == 'row1col1'
+        assert ws.cell(column=2, row=2).value == 'row2col2'
 
     def test_inserts_headers_if_provided(self):
         headers = ('ColA', 'ColB')
         wb = self.mixin.generate_xlsx(self.data, headers)
         ws = self._get_sheet(wb)
-        assert ws.cell('A1').value == 'ColA'
-        assert ws.cell('B2').value == 'row1col2'
+        assert ws.cell(column=1, row=1).value == 'ColA'
+        assert ws.cell(column=2, row=2).value == 'row1col2'
 
 
 class GenerateCsvTests(TestCase):
