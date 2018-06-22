@@ -8,5 +8,5 @@ DATABASES = {
 SECRET_KEY = 'tests'
 
 INSTALLED_APPS = (
-    'tests'
+    'tests',
 )
