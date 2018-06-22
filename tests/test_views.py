@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from django.http import HttpResponse
-from django.db.models.query import QuerySet
 from django.test import TestCase
 from StringIO import StringIO
 import mock
@@ -13,12 +12,14 @@ from .models import MockModel, MockAuthor
 
 
 class MockModelFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = MockModel
+    class Meta:
+        model = MockModel
     title = factory.Sequence(lambda n: 'title{0}'.format(n))
 
 
 class MockAuthorFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = MockAuthor
+    class Meta:
+        model = MockAuthor
     name = factory.Sequence(lambda n: 'name{0}'.format(n))
 
 
@@ -37,8 +38,8 @@ class GenerateDataTests(TestCase):
 
     def test_if_queryset_is_none_gets_self_queryset(self):
         self.mixin.queryset = MockModel.objects.all()
-        self.assertSequenceEqual(MockModel.objects.values_list(), 
-            list(self.mixin.generate_data()))
+        self.assertSequenceEqual(MockModel.objects.values_list(),
+                                 list(self.mixin.generate_data()))
 
     def test_returns_values_list_qs_if_queryset(self):
         self.mixin.queryset = self.queryset
