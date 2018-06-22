@@ -167,7 +167,7 @@ class SpreadsheetResponseMixin(object):
 
     def generate_xlsx(self, data, headers=None, file=None):
         wb = Workbook()
-        ws = wb.get_active_sheet()
+        ws = wb.active
 
         # Put in headers
         rowoffset = 0
