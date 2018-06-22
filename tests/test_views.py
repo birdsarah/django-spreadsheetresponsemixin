@@ -430,11 +430,7 @@ class GetFieldsTests(TestCase):
 
     def test_get_fields_from_values_list_queryset(self):
         self.mixin.queryset = MockModel.objects.all().values_list()
-        assert self.mixin.get_fields() == ['id', 'title', 'author_id']
-
-    def test_get_fields_from_values_list_queryset_with_specific_fields(self):
-        self.mixin.queryset = MockModel.objects.all().values_list('author', 'title')
-        assert self.mixin.get_fields() == ['author', 'title']
+        assert self.mixin.get_fields() == ['id', 'title', 'author']
 
 
 class GetRenderMethodTest(TestCase):
