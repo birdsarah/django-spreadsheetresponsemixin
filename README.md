@@ -1,6 +1,8 @@
 django-spreadsheetresponsemixin
 ===============================
 
+**DEPRECATION NOTICE** This project is deprecated in favour of [django-tables2](https://github.com/jieter/django-tables2) export functionality
+
 View mixin for django, that generates a csv or excel sheet.
 
 [![Build Status on Travis](https://travis-ci.org/aptivate/django-spreadsheetresponsemixin.svg?branch=master)](https://travis-ci.org/aptivate/django-spreadsheetresponsemixin)
@@ -27,7 +29,7 @@ Add to your django view as a mixin::
             self.queryset = self.get_queryset()
             return self.render_csv_response()
 
-Note you must specify a Queryset, ValuesQueryset or ValuesListQueryset on the 
+Note you must specify a Queryset, ValuesQueryset or ValuesListQueryset on the
 class or pass it in when you call the render method.
 
 You can also specify the fields and the headers as tuples if you want to refine
