@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from django.http import HttpResponse
-from django.db.models.query import QuerySet
 from django.test import TestCase
 from StringIO import StringIO
 import mock
@@ -13,12 +12,14 @@ from .models import MockModel, MockAuthor
 
 
 class MockModelFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = MockModel
+    class Meta:
+        model = MockModel
     title = factory.Sequence(lambda n: 'title{0}'.format(n))
 
 
 class MockAuthorFactory(factory.django.DjangoModelFactory):
-    FACTORY_FOR = MockAuthor
+    class Meta:
+        model = MockAuthor
     name = factory.Sequence(lambda n: 'name{0}'.format(n))
 
 
@@ -37,8 +38,8 @@ class GenerateDataTests(TestCase):
 
     def test_if_queryset_is_none_gets_self_queryset(self):
         self.mixin.queryset = MockModel.objects.all()
-        self.assertSequenceEqual(MockModel.objects.values_list(), 
-            list(self.mixin.generate_data()))
+        self.assertSequenceEqual(MockModel.objects.values_list(),
+                                 list(self.mixin.generate_data()))
 
     def test_returns_values_list_qs_if_queryset(self):
         self.mixin.queryset = self.queryset
@@ -132,7 +133,7 @@ class GenerateXlsxTests(TestCase):
         self.mixin = SpreadsheetResponseMixin()
 
     def _get_sheet(self, wb):
-        return wb.get_active_sheet()
+        return wb.active
 
     def test_returns_workbook_if_no_file_passed(self):
         assert type(self.mixin.generate_xlsx(self.data)) == Workbook
@@ -146,15 +147,15 @@ class GenerateXlsxTests(TestCase):
     def test_adds_row_of_data(self):
         wb = self.mixin.generate_xlsx(self.data)
         ws = self._get_sheet(wb)
-        assert ws.cell('A1').value == 'row1col1'
-        assert ws.cell('B2').value == 'row2col2'
+        assert ws.cell(column=1, row=1).value == 'row1col1'
+        assert ws.cell(column=2, row=2).value == 'row2col2'
 
     def test_inserts_headers_if_provided(self):
         headers = ('ColA', 'ColB')
         wb = self.mixin.generate_xlsx(self.data, headers)
         ws = self._get_sheet(wb)
-        assert ws.cell('A1').value == 'ColA'
-        assert ws.cell('B2').value == 'row1col2'
+        assert ws.cell(column=1, row=1).value == 'ColA'
+        assert ws.cell(column=2, row=2).value == 'row1col2'
 
 
 class GenerateCsvTests(TestCase):
@@ -429,11 +430,7 @@ class GetFieldsTests(TestCase):
 
     def test_get_fields_from_values_list_queryset(self):
         self.mixin.queryset = MockModel.objects.all().values_list()
-        assert self.mixin.get_fields() == ['id', 'title', 'author_id']
-
-    def test_get_fields_from_values_list_queryset_with_specific_fields(self):
-        self.mixin.queryset = MockModel.objects.all().values_list('author', 'title')
-        assert self.mixin.get_fields() == ['author', 'title']
+        assert self.mixin.get_fields() == ['id', 'title', 'author']
 
 
 class GetRenderMethodTest(TestCase):

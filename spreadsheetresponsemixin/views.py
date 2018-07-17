@@ -178,7 +178,7 @@ class SpreadsheetResponseMixin(object):
 
     def generate_xlsx(self, data, headers=None, file=None):
         wb = Workbook()
-        ws = wb.get_active_sheet()
+        ws = wb.active
 
         # Put in headers
         rowoffset = 0
@@ -238,8 +238,6 @@ class SpreadsheetResponseMixin(object):
             return kwargs['fields']
         elif hasattr(self, 'fields') and self.fields is not None:
             return self.fields
-        elif hasattr(self.queryset, 'field_names'):
-            return self.queryset.field_names
         else:
             model = self.queryset.model
             return [f.name for f in model._meta.fields]
