@@ -3,12 +3,21 @@ from django.db.models.query import QuerySet
 from openpyxl import Workbook
 from StringIO import StringIO
 import csv
+from warnings import warn
+
+DEPRECATION_WARNING = """
+django-spreadsheetresponsemixin is deprecated.
+Use django-tables2 export functionality instead:
+https://django-tables2.readthedocs.io/en/latest/pages/export.html
+"""
 
 
 class SpreadsheetResponseMixin(object):
     filename_base = 'export'
 
     def render_excel_response(self, **kwargs):
+        warn(DEPRECATION_WARNING)
+
         filename = self.get_filename(extension='xlsx')
         # Generate content
         self.data, self.headers = self.render_setup(**kwargs)
@@ -23,6 +32,8 @@ class SpreadsheetResponseMixin(object):
         return response
 
     def render_csv_response(self, **kwargs):
+        warn(DEPRECATION_WARNING)
+
         filename = self.get_filename(extension='csv')
         # Generate content
         self.data, self.headers = self.render_setup(**kwargs)
