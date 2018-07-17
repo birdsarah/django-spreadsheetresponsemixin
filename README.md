@@ -1,6 +1,3 @@
-django-spreadsheetresponsemixin
-===============================
-
 DEPRECATION NOTICE
 ==================
 
